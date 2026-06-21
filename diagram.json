@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "author": "ChatGPT",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-uno",
+      "id": "uno",
+      "top": 0,
+      "left": 0
+    },
+
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd",
+      "top": -220,
+      "left": 300
+    },
+
+    {
+      "type": "wokwi-servo",
+      "id": "servoEntry",
+      "top": 200,
+      "left": 320
+    },
+
+    {
+      "type": "wokwi-servo",
+      "id": "servoExit",
+      "top": 200,
+      "left": 470
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "entryIR",
+      "top": -90,
+      "left": -220
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "exitIR",
+      "top": -20,
+      "left": -220
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "k1",
+      "top": 120,
+      "left": -220
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "k2",
+      "top": 180,
+      "left": -220
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "k3",
+      "top": 240,
+      "left": -220
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "k4",
+      "top": 300,
+      "left": -220
+    },
+
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzz",
+      "top": 360,
+      "left": 300
+    },
+
+    {
+      "type": "wokwi-led",
+      "id": "green",
+      "top": 360,
+      "left": 430,
+      "attrs": {
+        "color": "green"
+      }
+    },
+
+    {
+      "type": "wokwi-led",
+      "id": "red",
+      "top": 360,
+      "left": 510,
+      "attrs": {
+        "color": "red"
+      }
+    }
+  ],
+
+  "connections": [
+
+    ["uno:2","entryIR:1.l","green"],
+    ["entryIR:2.r","uno:GND","black"],
+
+    ["uno:3","exitIR:1.l","green"],
+    ["exitIR:2.r","uno:GND","black"],
+
+    ["uno:7","k1:1.l","green"],
+    ["k1:2.r","uno:GND","black"],
+
+    ["uno:8","k2:1.l","green"],
+    ["k2:2.r","uno:GND","black"],
+
+    ["uno:9","k3:1.l","green"],
+    ["k3:2.r","uno:GND","black"],
+
+    ["uno:10","k4:1.l","green"],
+    ["k4:2.r","uno:GND","black"],
+
+    ["servoEntry:PWM","uno:5","orange"],
+    ["servoEntry:V+","uno:5V","red"],
+    ["servoEntry:GND","uno:GND","black"],
+
+    ["servoExit:PWM","uno:6","orange"],
+    ["servoExit:V+","uno:5V","red"],
+    ["servoExit:GND","uno:GND","black"],
+
+    ["buzz:1","uno:11","green"],
+    ["buzz:2","uno:GND","black"],
+
+    ["green:A","uno:12","green"],
+    ["green:C","uno:GND","black"],
+
+    ["red:A","uno:13","green"],
+    ["red:C","uno:GND","black"],
+
+    ["lcd:RS","uno:A3","green"],
+    ["lcd:E","uno:A4","green"],
+    ["lcd:D4","uno:A5","green"],
+    ["lcd:D5","uno:A2","green"],
+    ["lcd:D6","uno:A1","green"],
+    ["lcd:D7","uno:A0","green"],
+
+    ["lcd:RW","uno:GND","black"],
+    ["lcd:VSS","uno:GND","black"],
+    ["lcd:VDD","uno:5V","red"],
+    ["lcd:VO","uno:GND","black"],
+    ["lcd:A","uno:5V","red"],
+    ["lcd:K","uno:GND","black"]
+  ]
+}
