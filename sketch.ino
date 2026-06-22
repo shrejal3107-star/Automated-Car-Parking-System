@@ -1,8 +1,6 @@
 /*
  * Automated Car Parking System — Arduino Uno version
- * Simulator: Wokwi (https://wokwi.com) or real Arduino Uno
- *
- * Converted from 8051/Keil version. Same bitmask allocator logic.
+ * Simulator: Wokwi (https://wokwi.com) 
  *
  * Arduino Uno pin map:
  *   D2          -> IR Entry sensor (active LOW)
@@ -16,50 +14,42 @@
  *   D13         -> LED Red
  *   A0-A2       -> 7-segment (only 3 bits needed for 0-6, or use full A0-A5)
  *   LCD on 4-bit mode: RS=A3, EN=A4, D4-D7 = A5,... (see lcd object below)
- *
- * NOTE: Uno only has 14 digital pins, so this uses some analog pins as
- * digital I/O for the LCD and segment display — completely valid on Uno,
- * analog pins A0-A5 work as digitalWrite-able pins.
  */
 
 #include <Servo.h>
 #include <LiquidCrystal.h>
 
-/* ── LCD: RS, EN, D4, D5, D6, D7 (using analog pins as digital) ── */
-LiquidCrystal lcd(A3, A4, A5, A2, A1, A0);
-/* NOTE: if you also want the 7-segment display, free up A0-A2 by moving
-   LCD fully onto digital pins, OR drop the 7-segment in this version —
-   LCD already shows the same free-slot count, so 7-seg is optional here. */
 
-/* ── IR Sensors ── */
+LiquidCrystal lcd(A3, A4, A5, A2, A1, A0);
+
+
+// IR sensors
 const int PIN_IR_ENTRY = 2;
 const int PIN_IR_EXIT  = 3;
 
-/* ── Servos ── */
+// servo 
 const int PIN_SERVO_ENTRY = 5;
 const int PIN_SERVO_EXIT  = 6;
 Servo entryServo;
 Servo exitServo;
 
-/* ── Exit keypad (slots 1-4 direct, 5/6 via combo) ── */
+//exit keypad
 const int PIN_KEY1 = 7;
 const int PIN_KEY2 = 8;
 const int PIN_KEY3 = 9;
 const int PIN_KEY4 = 10;
 
-/* ── Buzzer + LEDs ── */
+// buzzer , LED : green , LED: red
 const int PIN_BUZZER     = 11;
 const int PIN_LED_GREEN  = 12;
 const int PIN_LED_RED    = 13;
 
-/* ── Constants ── */
+
 const int TOTAL_SLOTS = 6;
 const byte ALL_FREE   = 0x3F;   /* 0011 1111 */
 const int GATE_HOLD_MS = 3000;
 
-/* ──────────────────────────────────────────
-   BITMASK SLOT ALLOCATOR (identical logic to 8051 version)
-   ────────────────────────────────────────── */
+//bitmask slot allocator
 struct ParkingState {
   byte slotMap;
   byte entryCount;
@@ -89,7 +79,7 @@ bool slotIsFree(ParkingState &p, byte slot) {
 }
 
 byte countFree(byte map) {
-  /* Brian Kernighan's bit count */
+   // i have used the brian kernighan algo
   byte count = 0;
   while (map) { map &= (map - 1); count++; }
   return count;
@@ -98,9 +88,7 @@ byte countFree(byte map) {
 bool isFull(ParkingState &p)  { return p.slotMap == 0x00; }
 bool isEmpty(ParkingState &p) { return p.slotMap == ALL_FREE; }
 
-/* ──────────────────────────────────────────
-   BEEP
-   ────────────────────────────────────────── */
+
 void beep(byte times) {
   for (byte i = 0; i < times; i++) {
     digitalWrite(PIN_BUZZER, HIGH); delay(100);
@@ -108,13 +96,11 @@ void beep(byte times) {
   }
 }
 
-/* ──────────────────────────────────────────
-   KEYPAD READ — returns slot number (1-6) or 0
-   Arduino's Servo library + digitalRead replace the manual
-   sbit polling from the 8051 version — same debounce idea.
-   ────────────────────────────────────────── */
+
+
+// keypad , this returns the slot number
 byte readExitKey() {
-  delay(20);  /* debounce */
+  delay(20);  
 
   bool k1 = digitalRead(PIN_KEY1) == LOW;
   bool k2 = digitalRead(PIN_KEY2) == LOW;
@@ -136,16 +122,14 @@ byte waitForExitKey() {
   lcd.setCursor(0, 1);
   lcd.print("Press slot key  ");
 
-  while (millis() - start < 10000) {  /* 10 second timeout */
+  while (millis() - start < 10000) {  // 10 second timeout
     byte key = readExitKey();
     if (key != 0) return key;
   }
   return 0;
 }
 
-/* ──────────────────────────────────────────
-   DISPLAY
-   ────────────────────────────────────────── */
+//display
 void displayUpdate(ParkingState &p) {
   byte freeCount = countFree(p.slotMap);
 
@@ -162,7 +146,8 @@ void displayUpdate(ParkingState &p) {
     lcd.print(" PARKING FULL  ");
     digitalWrite(PIN_LED_GREEN, LOW);
     digitalWrite(PIN_LED_RED, HIGH);
-  } else {
+  } 
+  else {
     lcd.print("Status: OPEN   ");
     digitalWrite(PIN_LED_GREEN, HIGH);
     digitalWrite(PIN_LED_RED, LOW);
@@ -175,8 +160,10 @@ void uartLog(ParkingState &p, const char *event, byte slot) {
   Serial.print("] Slot:");
   Serial.print(slot);
   Serial.print(" | Map:");
+   
   for (byte s = 1; s <= TOTAL_SLOTS; s++)
     Serial.print(slotIsFree(p, s) ? 'F' : 'X');
+   
   Serial.print(" | Free:");
   Serial.print(countFree(p.slotMap));
   Serial.print(" | In:");
@@ -185,9 +172,8 @@ void uartLog(ParkingState &p, const char *event, byte slot) {
   Serial.println(p.exitCount);
 }
 
-/* ──────────────────────────────────────────
-   ENTRY HANDLER
-   ────────────────────────────────────────── */
+// when a vehicle enters 
+// sensors detect a vehicle
 void handleEntry(ParkingState &p) {
   if (isFull(p)) {
     lcd.clear();
@@ -210,17 +196,17 @@ void handleEntry(ParkingState &p) {
   lcd.print(slot);
   beep(1);
 
-  entryServo.write(90);   /* open */
+  entryServo.write(90);   //open
   delay(GATE_HOLD_MS);
-  entryServo.write(0);    /* close */
+  entryServo.write(0);    //close
 
   displayUpdate(p);
   uartLog(p, "ENTRY", slot);
 }
 
-/* ──────────────────────────────────────────
-   EXIT HANDLER
-   ────────────────────────────────────────── */
+
+//when sensor detects a vehicle
+// exit of a vehicle
 void handleExit(ParkingState &p) {
   if (isEmpty(p)) {
     Serial.println("[EXIT ERROR] No cars parked");
@@ -271,9 +257,9 @@ void handleExit(ParkingState &p) {
   uartLog(p, "EXIT ", slot);
 }
 
-/* ──────────────────────────────────────────
-   SETUP
-   ────────────────────────────────────────── */
+
+
+// setup 
 void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
@@ -312,9 +298,9 @@ void setup() {
   Serial.println(parking.slotMap, HEX);
 }
 
-/* ──────────────────────────────────────────
-   LOOP
-   ────────────────────────────────────────── */
+
+
+// loop
 void loop() {
   if (digitalRead(PIN_IR_ENTRY) == LOW) {
     delay(50);
