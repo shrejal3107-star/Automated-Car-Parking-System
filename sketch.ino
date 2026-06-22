@@ -288,7 +288,7 @@ void setup() {
 
   lcd.setCursor(0, 0); lcd.print("  Car Parking  ");
   lcd.setCursor(0, 1); lcd.print("  System     ");
-  beep(2);
+  beep(3);
   delay(2000);
 
   displayUpdate(parking);
